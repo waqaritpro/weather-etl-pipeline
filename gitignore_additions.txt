@@ -1,4 +1,0 @@
-
-# Project-specific
-data/raw/*.json
-.env
