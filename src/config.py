@@ -44,3 +44,10 @@ AIR_QUALITY_HOURLY_VARS = [
 # --- Request settings ------------------------------------------------------
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
 PAST_DAYS = int(os.getenv("PAST_DAYS", "1"))  # how much history each run pulls
+
+# --- PostgreSQL connection ---------------------------------------------------
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", "5432"))
+DB_NAME = os.getenv("DB_NAME", "weather_db")
+DB_USER = os.getenv("DB_USER", "etl_user")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "change_me")

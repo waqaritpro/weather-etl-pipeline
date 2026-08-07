@@ -2,7 +2,7 @@
 
 Batch ETL pipeline that ingests hourly weather and air quality data for the Dallas–Fort Worth metro from the [Open-Meteo API](https://open-meteo.com/), stages the raw payloads, transforms them with Python, and loads them into PostgreSQL on a daily schedule.
 
-> **Status:** 🚧 Week 1 — ingestion layer complete. Transformations, Postgres load, and scheduling land over the next three weeks. See [Roadmap](#roadmap).
+> **Status:** 🚧 Week 2 — ingestion, Postgres schema, transform layer, and idempotent loads complete. Scheduling and data quality checks land next. See [Roadmap](#roadmap).
 
 ## Problem
 
@@ -28,20 +28,25 @@ Weather and air quality data is published hourly, but the raw API responses are 
 
 ## Tech stack
 
-Python 3.11 · requests · pandas · PostgreSQL · SQL · cron · python-dotenv
+Python 3.11 · requests · pandas · psycopg2 · PostgreSQL · SQL · cron · python-dotenv · pytest
 
 ## Project structure
 
 ```
 weather-etl-pipeline/
 ├── src/
-│   ├── config.py        # locations, API endpoints, settings
-│   └── ingest.py        # pulls weather + air quality, writes raw JSON
-├── sql/                 # DDL and load queries (week 2)
-├── tests/               # unit tests (week 2)
-├── data/raw/            # timestamped raw API payloads (gitignored)
-├── .env.example         # environment variable template
-└── requirements.txt
+│   ├── config.py         # locations, API endpoints, DB settings
+│   ├── ingest.py         # pulls weather + air quality, writes raw JSON
+│   ├── transform.py      # parses raw JSON into tidy hourly DataFrames
+│   └── load.py            # idempotent upserts into PostgreSQL
+├── sql/
+│   └── schema.sql         # locations + hourly_weather + hourly_air_quality DDL
+├── tests/
+│   └── test_transform.py  # unit tests for the transform layer
+├── data/raw/               # timestamped raw API payloads (gitignored)
+├── .env.example            # environment variable template
+├── requirements.txt
+└── requirements-dev.txt    # + pytest, for running the test suite
 ```
 
 ## Getting started
@@ -54,15 +59,27 @@ python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-cp .env.example .env            # defaults work out of the box
+cp .env.example .env            # defaults work out of the box; fill in DB_* for loads
 
 python -m src.ingest            # pull today's data into data/raw/
+
+createdb weather_db             # or point DB_NAME at an existing database
+psql weather_db -f sql/schema.sql
+
+python -m src.load              # transform data/raw/ and upsert into Postgres
+```
+
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+pytest
 ```
 
 ## Roadmap
 
 - [x] **Week 1** — Repo scaffold, ingestion of weather + air quality raw JSON
-- [ ] **Week 2** — Postgres schema (DDL), transform layer, upsert loads, unit tests
+- [x] **Week 2** — Postgres schema (DDL), transform layer, upsert loads, unit tests
 - [ ] **Week 3** — Daily cron scheduling, data quality checks, backfill support
 - [ ] **Week 4** — Analysis queries, README case study polish, sample dashboards
 
