@@ -16,6 +16,7 @@ import psycopg2
 from psycopg2.extras import execute_values
 
 from src.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, LOCATIONS, RAW_DATA_DIR
+from src.quality import check_frame
 from src.transform import transform_directory
 
 logging.basicConfig(
@@ -115,6 +116,17 @@ def main() -> int:
     if weather_df.empty and air_quality_df.empty:
         logger.warning("No raw files found in %s; nothing to load", RAW_DATA_DIR)
         return 0
+
+    # Quality gate: validate before touching Postgres, so bad data never loads.
+    reports = [
+        check_frame(weather_df, "hourly_weather"),
+        check_frame(air_quality_df, "hourly_air_quality"),
+    ]
+    for report in reports:
+        report.log()
+    if not all(report.ok for report in reports):
+        logger.error("Data quality checks failed; aborting load")
+        return 1
 
     conn = get_connection()
     try:

@@ -50,6 +50,27 @@ AIR_QUALITY_HOURLY_VARS = [
 REQUEST_TIMEOUT_SECONDS = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "30"))
 PAST_DAYS = int(os.getenv("PAST_DAYS", "1"))  # how much history each run pulls
 
+# --- Data quality thresholds -----------------------------------------------
+# Checks in src/quality.py gate the load. A column whose null fraction exceeds
+# MAX_NULL_FRACTION, or a value outside its (min, max) range, fails the run.
+MAX_NULL_FRACTION = float(os.getenv("MAX_NULL_FRACTION", "0.2"))
+
+# Plausible physical ranges (inclusive). None on a bound means "unbounded".
+# Keyed by column name; only columns listed here are range-checked.
+VALUE_RANGES = {
+    "temperature_2m": (-60.0, 60.0),        # deg C
+    "relative_humidity_2m": (0.0, 100.0),   # percent
+    "precipitation": (0.0, None),           # mm, never negative
+    "wind_speed_10m": (0.0, 150.0),         # km/h
+    "wind_gusts_10m": (0.0, 200.0),         # km/h
+    "surface_pressure": (800.0, 1100.0),    # hPa
+    "pm10": (0.0, None),
+    "pm2_5": (0.0, None),
+    "ozone": (0.0, None),
+    "nitrogen_dioxide": (0.0, None),
+    "us_aqi": (0.0, 1000.0),
+}
+
 # --- PostgreSQL connection ---------------------------------------------------
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", "5432"))
