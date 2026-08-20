@@ -1,0 +1,33 @@
+# Local Postgres for the weather ETL pipeline.
+#
+#   docker compose up -d      # start Postgres (schema auto-applied on first boot)
+#   docker compose down       # stop, keeping data
+#   docker compose down -v    # stop and wipe the data volume
+#
+# Credentials match the defaults in src/config.py, so `python -m src.run_pipeline`
+# works against this database with no .env changes.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: weather_etl_postgres
+    environment:
+      POSTGRES_DB: weather_db
+      POSTGRES_USER: etl_user
+      POSTGRES_PASSWORD: change_me
+    ports:
+      # Host 5433 -> container 5432, so this pipeline's DB never collides with
+      # another local Postgres already bound to 5432. Set DB_PORT=5433 in .env.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # schema.sql runs automatically the first time the data volume is created.
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U etl_user -d weather_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
