@@ -24,6 +24,11 @@ LOCATIONS = [
 WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
 AIR_QUALITY_API_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 
+# Historical backfill. The forecast endpoint only reaches ~92 days back, so
+# weather backfills use the ERA5 archive host. The air quality endpoint serves
+# its own history via start_date/end_date, so it needs no separate archive URL.
+WEATHER_ARCHIVE_API_URL = "https://archive-api.open-meteo.com/v1/archive"
+
 WEATHER_HOURLY_VARS = [
     "temperature_2m",
     "relative_humidity_2m",
